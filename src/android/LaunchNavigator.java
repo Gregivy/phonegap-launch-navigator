@@ -690,8 +690,8 @@ public class LaunchNavigator extends CordovaPlugin {
                 parts = splitLatLon(startLatLon);
                 /*intent.putExtra("lat_from", parts[0]);
                 intent.putExtra("lon_from", parts[1]);*/
-                uri = uri.appendQueryParameter("lat_from", parts[0])
-                .appendQueryParameter("lon_from", parts[1]);
+                uri = uri.buildUpon().appendQueryParameter("lat_from", parts[0])
+                .appendQueryParameter("lon_from", parts[1]).build();
                 logMsg += " ["+startLatLon+"]";
                 if(!isNull(startAddress)){
                     logMsg += " ('"+startAddress+"')";
@@ -713,7 +713,7 @@ public class LaunchNavigator extends CordovaPlugin {
                     String value = oExtras.getString(key);
                     //intent.putExtra(key, value);
                     if (key != "private_key") {
-                        uri = uri.appendQueryParameter(key, value);
+                        uri = uri.buildUpon().appendQueryParameter(key, value).build();
                     } else {
                         private_key = value;
                     }
