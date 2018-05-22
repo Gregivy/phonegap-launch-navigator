@@ -667,17 +667,12 @@ public class LaunchNavigator extends CordovaPlugin {
                 startLatLon = getLocationFromPos(args, 5);
             }
 
-            //Intent intent = new Intent(supportedAppPackages.get(YANDEX)+".action.BUILD_ROUTE_ON_MAP");
-            
-            //intent.setPackage(supportedAppPackages.get(YANDEX));
             String logMsg = "Using Yandex to navigate to";
 
             String[] parts = splitLatLon(destLatLon);
             Uri uri = Uri.parse("yandexnavi://build_route_on_map").buildUpon()
                 .appendQueryParameter("lat_to", parts[0])
                 .appendQueryParameter("lon_to", parts[1]).build();
-            /*intent.putExtra("lat_to", parts[0]);
-            intent.putExtra("lon_to", parts[1]);*/
             logMsg += " ["+destLatLon+"]";
 
             if(!isNull(destAddress)){
@@ -688,8 +683,6 @@ public class LaunchNavigator extends CordovaPlugin {
             logMsg += " from";
             if(!sType.equals("none")){
                 parts = splitLatLon(startLatLon);
-                /*intent.putExtra("lat_from", parts[0]);
-                intent.putExtra("lon_from", parts[1]);*/
                 uri = uri.buildUpon().appendQueryParameter("lat_from", parts[0])
                 .appendQueryParameter("lon_from", parts[1]).build();
                 logMsg += " ["+startLatLon+"]";
@@ -705,14 +698,13 @@ public class LaunchNavigator extends CordovaPlugin {
             if(!isNull(jsonStringExtras)){
                 oExtras =  new JSONObject(jsonStringExtras);
             }
-            String private_key = "";
+            String private_key;
             if(oExtras != null){
                 Iterator<?> keys = oExtras.keys();
                 while( keys.hasNext() ) {
                     String key = (String)keys.next();
                     String value = oExtras.getString(key);
-                    //intent.putExtra(key, value);
-                    if (key != "private_key") {
+                    if (key.equals("private_key")) {
                         uri = uri.buildUpon().appendQueryParameter(key, value).build();
                     } else {
                         private_key = value;
@@ -721,7 +713,7 @@ public class LaunchNavigator extends CordovaPlugin {
             }
             logDebug(logMsg);
 
-            if (private_key != "") {
+            if (!private_key.isEmpty()) {
                 uri = uri.buildUpon().appendQueryParameter("signature", sha256rsa(private_key, uri.toString())).build();
             }
 
