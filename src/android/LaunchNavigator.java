@@ -704,7 +704,7 @@ public class LaunchNavigator extends CordovaPlugin {
                 while( keys.hasNext() ) {
                     String key = (String)keys.next();
                     String value = oExtras.getString(key);
-                    if (key.equals("private_key")) {
+                    if (!key.equals("private_key")) {
                         uri = uri.buildUpon().appendQueryParameter(key, value).build();
                     } else {
                         private_key = value;
