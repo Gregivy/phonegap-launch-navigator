@@ -705,7 +705,7 @@ public class LaunchNavigator extends CordovaPlugin {
             if(!isNull(jsonStringExtras)){
                 oExtras =  new JSONObject(jsonStringExtras);
             }
-            private String private_key = "";
+            String private_key = "";
             if(oExtras != null){
                 Iterator<?> keys = oExtras.keys();
                 while( keys.hasNext() ) {
