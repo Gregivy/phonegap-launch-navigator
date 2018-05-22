@@ -675,7 +675,7 @@ public class LaunchNavigator extends CordovaPlugin {
             String[] parts = splitLatLon(destLatLon);
             Uri uri = Uri.parse("yandexnavi://build_route_on_map").buildUpon()
                 .appendQueryParameter("lat_to", parts[0])
-                .appendQueryParameter("lon_to", parts[1]);
+                .appendQueryParameter("lon_to", parts[1]).build();
             /*intent.putExtra("lat_to", parts[0]);
             intent.putExtra("lon_to", parts[1]);*/
             logMsg += " ["+destLatLon+"]";
