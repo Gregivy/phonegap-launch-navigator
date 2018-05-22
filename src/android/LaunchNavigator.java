@@ -59,6 +59,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import android.util.Base64;
+import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.Signature;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+
 
 public class LaunchNavigator extends CordovaPlugin {
 
@@ -660,13 +667,17 @@ public class LaunchNavigator extends CordovaPlugin {
                 startLatLon = getLocationFromPos(args, 5);
             }
 
-            Intent intent = new Intent(supportedAppPackages.get(YANDEX)+".action.BUILD_ROUTE_ON_MAP");
-            intent.setPackage(supportedAppPackages.get(YANDEX));
+            //Intent intent = new Intent(supportedAppPackages.get(YANDEX)+".action.BUILD_ROUTE_ON_MAP");
+            
+            //intent.setPackage(supportedAppPackages.get(YANDEX));
             String logMsg = "Using Yandex to navigate to";
 
             String[] parts = splitLatLon(destLatLon);
-            intent.putExtra("lat_to", parts[0]);
-            intent.putExtra("lon_to", parts[1]);
+            Uri uri = Uri.parse("yandexnavi://build_route_on_map").buildUpon()
+                .appendQueryParameter("lat_to", parts[0])
+                .appendQueryParameter("lon_to", parts[1]);
+            /*intent.putExtra("lat_to", parts[0]);
+            intent.putExtra("lon_to", parts[1]);*/
             logMsg += " ["+destLatLon+"]";
 
             if(!isNull(destAddress)){
@@ -677,8 +688,10 @@ public class LaunchNavigator extends CordovaPlugin {
             logMsg += " from";
             if(!sType.equals("none")){
                 parts = splitLatLon(startLatLon);
-                intent.putExtra("lat_from", parts[0]);
-                intent.putExtra("lon_from", parts[1]);
+                /*intent.putExtra("lat_from", parts[0]);
+                intent.putExtra("lon_from", parts[1]);*/
+                uri = uri.appendQueryParameter("lat_from", parts[0])
+                .appendQueryParameter("lon_from", parts[1]);
                 logMsg += " ["+startLatLon+"]";
                 if(!isNull(startAddress)){
                     logMsg += " ('"+startAddress+"')";
@@ -692,16 +705,30 @@ public class LaunchNavigator extends CordovaPlugin {
             if(!isNull(jsonStringExtras)){
                 oExtras =  new JSONObject(jsonStringExtras);
             }
-
+            private String private_key = "";
             if(oExtras != null){
                 Iterator<?> keys = oExtras.keys();
                 while( keys.hasNext() ) {
                     String key = (String)keys.next();
                     String value = oExtras.getString(key);
-                    intent.putExtra(key, value);
+                    //intent.putExtra(key, value);
+                    if (key != "private_key") {
+                        uri = uri.appendQueryParameter(key, value);
+                    } else {
+                        private_key = value;
+                    }
                 }
             }
             logDebug(logMsg);
+
+            uri = uri.build();
+            if (private_key != "") {
+                uri = uri.buildUpon().appendQueryParameter("signature", sha256rsa(private_key, uri.toString())).build();
+            }
+
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.setPackage("ru.yandex.yandexnavi");
+
             this.cordova.getActivity().startActivity(intent);
             callbackContext.success();
         }catch( JSONException e ) {
@@ -1549,6 +1576,25 @@ public class LaunchNavigator extends CordovaPlugin {
         }
         location = lat + "," + lon;
         return location;
+    }
+
+    public String sha256rsa(String key, String data) throws SecurityException {
+        String trimmedKey = key.replaceAll("-----\\w+ PRIVATE KEY-----", "")
+                                .replaceAll("\\s", "");
+
+        try {
+            byte[]         result    = Base64.decode(trimmedKey, Base64.DEFAULT);
+            KeyFactory     factory   = KeyFactory.getInstance("RSA");
+            EncodedKeySpec keySpec   = new PKCS8EncodedKeySpec(result);
+            Signature      signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(factory.generatePrivate(keySpec));
+            signature.update(data.getBytes());
+
+            byte[] encrypted = signature.sign();
+            return Base64.encodeToString(encrypted, Base64.NO_WRAP);
+        } catch (Exception e) {
+            throw new SecurityException("Error calculating cipher data. SIC!");
+        }
     }
 
     private String getLocationFromName(JSONArray args, int index) throws Exception{
