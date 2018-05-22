@@ -721,7 +721,6 @@ public class LaunchNavigator extends CordovaPlugin {
             }
             logDebug(logMsg);
 
-            uri = uri.build();
             if (private_key != "") {
                 uri = uri.buildUpon().appendQueryParameter("signature", sha256rsa(private_key, uri.toString())).build();
             }
